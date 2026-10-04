@@ -1,31 +1,35 @@
 # Real-Time Terminal ASCII Video Renderer
 
-> Live webcam → ASCII art → VS Code terminal, running at **30+ FPS** with zero-flicker rendering and 24-bit TrueColor support.
-
+# ASCII Video Renderer
+A high-performance command-line application that captures live webcam feed and renders it as real-time ASCII art directly in your terminal. It features a retro startup animation, multiple render modes, live filters, and interactive overlays.
+A real-time command-line application that converts live webcam feed into high-performance ASCII art inside the terminal.
+## Features
+- **Multiple Render Modes:** Truecolor, Matrix, Monochrome, Edge detection, Blocks (2x resolution), and Threshold.
+- **Live Filters & Themes:** Blur, sharpen, color channel isolation, and customizable color themes (cyan, amber, pink, etc.).
+- **Interactive Overlays:** Live motion detection, face detection boxes, clock, and a custom watermark.
+- **Tools:** Freeze frame, screenshot saving (TXT + HTML), local recording & playback, and live zoom.
+- **Zero-Flicker Engine:** Uses ANSI escape codes and batched TrueColor rendering for maximum FPS without screen tearing.
+Developed by **Noelpm14**.
+## Requirements
+Ensure you have Python installed, then install the dependencies:
+```cmd
 ---
-
 ## Quick Start
-
-```powershell
-# Install dependencies (already satisfied on this machine)
-py -m pip install -r requirements.txt
-
-# Run with default settings (TrueColor mode, camera 0, 30 FPS cap)
-py ascii_renderer.py
-
-# Matrix green mode
-py ascii_renderer.py --mode matrix
-
-# Monochrome mode, camera index 1
-py ascii_renderer.py --mode mono --camera 1
-
-# Higher FPS cap with custom brightness
-py ascii_renderer.py --fps-cap 60 --brightness 1.3
+### Prerequisites
+```bash
+pip install opencv-python numpy
 ```
-
----
-
-## Live Controls (while running)
+## How to Run
+**On Windows (Easiest):**
+Simply double-click the included `run.bat` file. It will automatically open a maximized terminal and start the renderer.
+**Via Command Line:**
+```cmd
+### Run
+Double-click `run.bat` or execute:
+```bash
+python ascii_renderer.py
+```
+## Live Controls
 
 | Key | Action |
 |-----|--------|
@@ -35,69 +39,9 @@ py ascii_renderer.py --fps-cap 60 --brightness 1.3
 | `-` | Decrease brightness (step 0.1, min 0.3) |
 | `i` | Invert the density ramp (dark ↔ light) |
 
----
-
-## Color Modes
-
-| Mode | Description |
-|------|-------------|
-| `truecolor` | 24-bit RGB per character via `ESC[38;2;R;G;Bm` |
-| `matrix` | Uniform ANSI green (`ESC[32m`) — classic hacker look |
-| `mono` | Plain white characters, no color codes |
-
----
-
-## CLI Arguments
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--mode` | `truecolor` | Initial color mode |
-| `--camera` | `0` | OpenCV camera index |
-| `--fps-cap` | `30.0` | Maximum frames per second |
-| `--brightness` | `1.0` | Brightness multiplier `[0.3 – 3.0]` |
-
----
-
-## Architecture
-
-```
-Webcam (cv2.VideoCapture)
-        │
-        ▼
-   cv2.flip(frame, 1)          ← mirror image
-        │
-        ▼
-   cv2.resize → (cols, rows-2) ← dynamic terminal size
-        │
-        ├──▶  cv2.cvtColor BGR→GRAY
-        │           │
-        │           ▼
-        │     brightness scale (NumPy)
-        │           │
-        │           ▼
-        │     I = floor(G/255 × 12)   ← vectorized
-        │           │
-        │           ▼
-        │     ASCII_CHARS[I]           ← 2D char grid
-        │
-        ├── TrueColor: ESC[38;2;R;G;Bm per char
-        ├── Matrix:    ESC[32m  whole frame
-        └── Mono:      plain characters
-                │
-                ▼
-        ESC[H  +  sys.stdout.write()  ← zero-flicker
-                │
-                ▼
-            HUD status line
-```
-
----
-
-## Technical Highlights
-
-- **Zero-flicker rendering** — `\033[H` repositions cursor to `(0,0)` every frame instead of calling `cls/clear`, eliminating shell-process overhead.
-- **Vectorized quantization** — single NumPy expression maps the entire 2D grayscale matrix to ASCII indices simultaneously.
-- **Dynamic terminal geometry** — `shutil.get_terminal_size()` called each frame so resizing the VS Code panel or changing font size never crashes the stream.
-- **24-bit TrueColor** — extracts per-pixel BGR channels from the resized frame and embeds them as `\033[38;2;R;G;Bm` sequences.
-- **FPS telemetry** — live elapsed-time measurement with `time.perf_counter()` guards against division-by-zero.
-- **Windows VT support** — `SetConsoleMode` called at startup to enable ANSI processing on native Windows consoles (VS Code terminal already supports it).
+## Controls
+| Key | Description |
+| :--- | :--- |
+| `m` | Cycle render mode (truecolor, matrix, edge, etc.) |
+| `f` | Cycle filters (blur, sharpen, RGB channels) |
+| `t` | Cycle color themes |
